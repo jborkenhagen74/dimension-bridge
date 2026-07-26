@@ -230,59 +230,6 @@ Die Namen müssen exakt den Einträgen in `velocity.toml` entsprechen.
 
 Die Laufzeitkonfiguration und der Messaging-Kanal bleiben unverändert. Für ein bestehendes Setup genügt es daher, die Fabric-JAR auf jedem Backend durch die zur nativen Minecraft-Version passende 1.2.2-JAR und das Velocity-JAR durch Version 1.2.2 zu ersetzen. Alte und neue Fabric-JARs dürfen nicht gleichzeitig im selben `mods`-Ordner liegen.
 
-Vor einer öffentlichen Veröffentlichung sollten mindestens diese Smoke-Tests für jede API-Familie ausgeführt werden:
-
-```text
-1.20.1   legacy
-1.20.5   typed-constructor
-1.21     typed
-1.21.11  typed-identifier
-26.2     unobfuscated
-```
-
-Damit werden alle unterschiedlichen Netzwerk- und Mapping-Pfade geprüft.
-
-## Veröffentlichung auf Modrinth und CurseForge
-
-Die Veröffentlichung ist standardmäßig deaktiviert. Das Projekt verwendet das Mod Publish Plugin und erzeugt pro Minecraft-Version einen eigenen Plattform-Release.
-
-### Projekt-IDs setzen
-
-`publishing.properties.example` zeigt die benötigten Werte. Am besten in `~/.gradle/gradle.properties`:
-
-```properties
-enablePublishing=true
-modrinthFabricProjectId=DEINE_MODRINTH_ID
-curseforgeFabricProjectId=DEINE_CURSEFORGE_ID
-```
-
-Tokens niemals committen, sondern als Umgebungsvariablen setzen:
-
-```bash
-export MODRINTH_TOKEN='...'
-export CURSEFORGE_TOKEN='...'
-```
-
-### Einzelne Version veröffentlichen
-
-```bash
-gradle :fabric-1.21.4:publishMods -PenablePublishing=true
-```
-
-### Alle Fabric-Versionen veröffentlichen
-
-```bash
-gradle publishFabricAll -PenablePublishing=true
-```
-
-Jeder Upload wird als:
-
-- Loader: Fabric
-- Umgebung: ausschließlich Dedicated Server
-- Abhängigkeit: Fabric API
-- unterstützte Minecraft-Version: exakt die jeweilige Zielversion
-
-veröffentlicht.
 
 ### GitHub Actions
 
@@ -307,9 +254,6 @@ MODRINTH_FABRIC_PROJECT_ID
 CURSEFORGE_FABRIC_PROJECT_ID
 ```
 
-## Velocity separat veröffentlichen
-
-Das Velocity-JAR ist technisch ein Proxy-Plugin und nicht dasselbe Artefakt wie der Fabric-Mod. Für Modrinth sollte dafür ein eigenes Plugin-Projekt angelegt werden. CurseForge unterstützt Velocity-Projekte nicht in allen Kategorien gleichwertig; deshalb ist der automatische Upload des Velocity-JARs bewusst nicht mit dem Fabric-Projekt vermischt.
 
 ## Projektstruktur
 
@@ -322,7 +266,7 @@ fabric-families/typed-constructor/ 1.20.5–1.20.6
 fabric-families/typed/          1.21–1.21.10
 fabric-families/typed-identifier/ 1.21.11
 fabric-families/unobfuscated/   26.1–26.2
-fabric-versions/<version>/      dünne Gradle-Subprojekte
+fabric-versions/<version>/      kleine Gradle-Subprojekte
 velocity/                       Velocity-Plugin
 ```
 
