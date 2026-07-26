@@ -1,10 +1,16 @@
 # Changelog
 
+## 1.2.1
+
+- Behebt den GitHub-Actions-Build für Minecraft 1.20.5 und 1.20.6.
+- Trennt diese beiden Versionen in die API-Familie `typed-constructor`, da `ResourceLocation.fromNamespaceAndPath(...)` dort noch nicht existiert.
+- Ergänzt Minecraft 1.21 als eigenen Vertreter der späteren `typed`-Familie im Smoke-Test-Build.
+
 ## 1.2.0
 
 - Fügt einen Multi-Version-Build für alle stabilen Minecraft-Versionen von 1.20.1 bis 26.2 hinzu.
 - Baut für jede Spielversion ein eigenes serverseitiges Fabric-JAR.
-- Teilt den Fabric-Code in vier wartbare API-Familien: Legacy, typisierte Payloads mit `ResourceLocation`, 1.21.11 mit `Identifier` und nicht verschleierte 26.x-Versionen.
+- Teilt den Fabric-Code in drei wartbare API-Familien: Legacy, typisierte Payloads und nicht verschleierte 26.x-Versionen.
 - Ergänzt dynamische Fabric-API-Auflösung mit optionalen festen Overrides und Gradle Dependency Locking.
 - Ergänzt Sammelaufgaben für Builds und Release-Artefakte.
 - Ergänzt opt-in Veröffentlichung zu Modrinth und CurseForge über Mod Publish Plugin 2.1.1.

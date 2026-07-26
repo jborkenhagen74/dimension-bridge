@@ -11,7 +11,7 @@ allprojects {
     group = 'dev.dimensionbridge'
 }
 
-version = '1.2.0'
+version = '1.2.1'
 
 def fabricTargets = new JsonSlurper().parse(file('gradle/fabric-targets.json'))
 ext.fabricTargets = fabricTargets
@@ -54,7 +54,7 @@ tasks.register('verifyVersionMatrix') {
 tasks.register('buildFamilyRepresentatives') {
     group = 'verification'
     description = 'Builds one representative of every Fabric API family plus Velocity.'
-    dependsOn 'verifyVersionMatrix', ':velocity:build', ':fabric-1.20.1:build', ':fabric-1.20.5:build', ':fabric-1.21.11:build', ':fabric-26.2:build'
+    dependsOn 'verifyVersionMatrix', ':velocity:build', ':fabric-1.20.1:build', ':fabric-1.20.5:build', ':fabric-1.21:build', ':fabric-1.21.11:build', ':fabric-26.2:build'
 }
 
 tasks.named('check') {

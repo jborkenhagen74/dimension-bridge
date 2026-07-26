@@ -1,4 +1,4 @@
-# DimensionBridge 1.2.0
+# DimensionBridge 1.2.1
 
 DimensionBridge ist eine rein serverseitige, abgesicherte Bridge zwischen Fabric-Backends und einem Velocity-Proxy. Commandblöcke können Spieler zu registrierten Velocity-Servern verbinden, ohne dass normale Spieler `/server` oder eine Bridge-Berechtigung erhalten.
 
@@ -26,12 +26,13 @@ Snapshots, Pre-Releases und Release Candidates sind bewusst ausgeschlossen. Deta
 
 ## Wartbare Multi-Version-Architektur
 
-Die 22 JARs verwenden nicht 22 getrennte Codekopien, sondern vier API-Familien:
+Die 22 JARs verwenden nicht 22 getrennte Codekopien, sondern fünf API-Familien:
 
 | Familie | Minecraft | Java | Netzwerk-API |
 |---|---|---:|---|
 | `legacy` | 1.20.1–1.20.4 | 17 | `Identifier/ResourceLocation` + `PacketByteBuf/FriendlyByteBuf` |
-| `typed` | 1.20.5–1.21.10 | 21 | typisierte `CustomPacketPayload`-Pakete mit `ResourceLocation` |
+| `typed-constructor` | 1.20.5–1.20.6 | 21 | typisierte Payloads; `ResourceLocation` wird noch über den öffentlichen Konstruktor erstellt |
+| `typed` | 1.21–1.21.10 | 21 | typisierte `CustomPacketPayload`-Pakete mit `ResourceLocation.fromNamespaceAndPath(...)` |
 | `typed-identifier` | 1.21.11 | 21 | typisierte Payloads nach der Umbenennung zu `Identifier` |
 | `unobfuscated` | 26.1–26.2 | 25 | nicht remappendes Loom und neue Mojang-Namen |
 
@@ -106,7 +107,7 @@ gradle verifyVersionMatrix
 gradle buildFamilyRepresentatives
 ```
 
-`buildFamilyRepresentatives` baut Velocity sowie 1.20.1, 1.20.5, 1.21.11 und 26.2. Das ist der schnelle Kompatibilitätstest vor einem vollständigen 22-Versionen-Build.
+`buildFamilyRepresentatives` baut Velocity sowie 1.20.1, 1.20.5, 1.21, 1.21.11 und 26.2. Das ist der schnelle Kompatibilitätstest vor einem vollständigen 22-Versionen-Build.
 
 ## Spätere Minecraft-Versionen ergänzen
 
@@ -145,17 +146,17 @@ Das Schema lautet `fabric_api_<Version mit Unterstrichen>`.
 Beispiele:
 
 ```text
-velocity/build/libs/dimensionbridge-velocity-1.2.0.jar
-fabric-versions/1.20.1/build/libs/dimensionbridge-fabric-1.20.1-1.2.0+mc1.20.1.jar
-fabric-versions/1.21.11/build/libs/dimensionbridge-fabric-1.21.11-1.2.0+mc1.21.11.jar
-fabric-versions/26.2/build/libs/dimensionbridge-fabric-26.2-1.2.0+mc26.2.jar
+velocity/build/libs/dimensionbridge-velocity-1.2.1.jar
+fabric-versions/1.20.1/build/libs/dimensionbridge-fabric-1.20.1-1.2.1+mc1.20.1.jar
+fabric-versions/1.21.11/build/libs/dimensionbridge-fabric-1.21.11-1.2.1+mc1.21.11.jar
+fabric-versions/26.2/build/libs/dimensionbridge-fabric-26.2-1.2.1+mc26.2.jar
 ```
 
 Bei remappenden Loom-Versionen ist das normale Release-Artefakt die von `remapJar` erzeugte Datei. Entwicklungs- und Sources-JARs werden beim Einsammeln ausgeschlossen.
 
 ## Installation
 
-1. `dimensionbridge-velocity-1.2.0.jar` in `plugins/` des Velocity-Proxys kopieren.
+1. `dimensionbridge-velocity-1.2.1.jar` in `plugins/` des Velocity-Proxys kopieren.
 2. Auf jedem Fabric-Backend genau das JAR verwenden, dessen Minecraft-Version der nativen Serverversion entspricht.
 3. Server einmal starten und stoppen.
 4. Konfigurationen bearbeiten:
@@ -227,13 +228,14 @@ Die Namen müssen exakt den Einträgen in `velocity.toml` entsprechen.
 
 ## Aktualisierung von 1.1.0
 
-Die Laufzeitkonfiguration und der Messaging-Kanal bleiben unverändert. Für ein bestehendes Setup genügt es daher, die Fabric-JAR auf jedem Backend durch die zur nativen Minecraft-Version passende 1.2.0-JAR und das Velocity-JAR durch Version 1.2.0 zu ersetzen. Alte und neue Fabric-JARs dürfen nicht gleichzeitig im selben `mods`-Ordner liegen.
+Die Laufzeitkonfiguration und der Messaging-Kanal bleiben unverändert. Für ein bestehendes Setup genügt es daher, die Fabric-JAR auf jedem Backend durch die zur nativen Minecraft-Version passende 1.2.1-JAR und das Velocity-JAR durch Version 1.2.1 zu ersetzen. Alte und neue Fabric-JARs dürfen nicht gleichzeitig im selben `mods`-Ordner liegen.
 
 Vor einer öffentlichen Veröffentlichung sollten mindestens diese Smoke-Tests für jede API-Familie ausgeführt werden:
 
 ```text
 1.20.1   legacy
-1.20.5   typed
+1.20.5   typed-constructor
+1.21     typed
 1.21.11  typed-identifier
 26.2     unobfuscated
 ```
@@ -316,7 +318,8 @@ gradle/fabric-targets.json       stabile Zielversionen
 gradle/fabric-version.gradle    gemeinsamer Build aller Fabric-Ziele
 fabric-common/                  gemeinsame Konfiguration/Validierung
 fabric-families/legacy/         1.20.1–1.20.4
-fabric-families/typed/          1.20.5–1.21.10
+fabric-families/typed-constructor/ 1.20.5–1.20.6
+fabric-families/typed/          1.21–1.21.10
 fabric-families/typed-identifier/ 1.21.11
 fabric-families/unobfuscated/   26.1–26.2
 fabric-versions/<version>/      dünne Gradle-Subprojekte

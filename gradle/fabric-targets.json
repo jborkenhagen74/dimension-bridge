@@ -25,13 +25,13 @@
   },
   {
     "minecraft": "1.20.5",
-    "family": "typed",
+    "family": "typed-constructor",
     "java": 21,
     "loom": "remap"
   },
   {
     "minecraft": "1.20.6",
-    "family": "typed",
+    "family": "typed-constructor",
     "java": 21,
     "loom": "remap"
   },
