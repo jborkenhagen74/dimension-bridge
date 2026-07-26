@@ -1,0 +1,140 @@
+import groovy.json.JsonSlurper
+
+final String minecraftVersion = project.name.substring('fabric-'.length())
+final Map target = (Map) rootProject.ext.fabricTargets.find { it.minecraft == minecraftVersion }
+if (target == null) {
+    throw new GradleException("Keine Fabric-Zieldefinition für ${minecraftVersion} gefunden.")
+}
+
+final boolean remapped = target.loom == 'remap'
+final int javaVersion = (target.java as Number).intValue()
+final String family = target.family as String
+final String apiOverrideKey = 'fabric_api_' + minecraftVersion.replace('.', '_').replace('-', '_')
+final String fabricApiVersion = (findProperty(apiOverrideKey) ?: '+').toString()
+final String loaderVersion = findProperty('fabric_loader_version').toString()
+
+pluginManager.apply(remapped ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom')
+pluginManager.apply('maven-publish')
+
+version = "${rootProject.version}+mc${minecraftVersion}"
+
+base {
+    archivesName = "dimensionbridge-fabric-${minecraftVersion}"
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+configurations.configureEach {
+    resolutionStrategy.cacheDynamicVersionsFor 1, 'hours'
+    resolutionStrategy.componentSelection {
+        all { selection ->
+            if (selection.candidate.group == 'net.fabricmc.fabric-api'
+                    && selection.candidate.module == 'fabric-api'
+                    && fabricApiVersion == '+'
+                    && !selection.candidate.version.endsWith("+${minecraftVersion}")) {
+                selection.reject("Fabric API ${selection.candidate.version} gehört nicht zu Minecraft ${minecraftVersion}")
+            }
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    if (remapped) {
+        mappings loom.officialMojangMappings()
+        modImplementation "net.fabricmc:fabric-loader:${loaderVersion}"
+        modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricApiVersion}"
+    } else {
+        implementation "net.fabricmc:fabric-loader:${loaderVersion}"
+        implementation "net.fabricmc.fabric-api:fabric-api:${fabricApiVersion}"
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDirs = [
+                rootProject.file('fabric-common/src/main/java'),
+                rootProject.file("fabric-families/${family}/src/main/java")
+        ]
+        resources.srcDirs = [rootProject.file('fabric-common/src/main/resources')]
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_version', minecraftVersion
+    inputs.property 'java_version', javaVersion
+    filesMatching('fabric.mod.json') {
+        expand(
+                version: project.version,
+                minecraft_version: minecraftVersion,
+                java_version: javaVersion
+        )
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = javaVersion
+    options.encoding = 'UTF-8'
+}
+
+java {
+    // Ein einziges JDK 25 reicht für den Gesamtbuild. --release erzeugt dennoch
+    // zur jeweiligen Minecraft-Version passende Java-17/21/25-Klassen.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+    withSourcesJar()
+}
+
+// Locking turns the dynamic Fabric-API fallback into a reproducible dependency
+// after the first successful `buildFabricAll --write-locks` run.
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+if (providers.gradleProperty('enablePublishing').orNull?.toBoolean()) {
+    pluginManager.apply('me.modmuss50.mod-publish-plugin')
+
+    String modrinthProjectId = providers.gradleProperty('modrinthFabricProjectId').orNull
+    String curseforgeProjectId = providers.gradleProperty('curseforgeFabricProjectId').orNull
+    if (!modrinthProjectId && !curseforgeProjectId) {
+        throw new GradleException('Publishing ist aktiviert, aber keine Modrinth- oder CurseForge-Projekt-ID wurde angegeben.')
+    }
+
+    publishMods {
+        file = remapped ? remapJar.archiveFile : jar.archiveFile
+        changelog = providers.fileContents(rootProject.layout.projectDirectory.file('CHANGELOG.md')).asText
+        type = STABLE
+        modLoaders.add('fabric')
+        displayName = "DimensionBridge ${rootProject.version} für Fabric ${minecraftVersion}"
+        version = project.version.toString()
+
+        if (modrinthProjectId) {
+            modrinth {
+                accessToken = providers.environmentVariable('MODRINTH_TOKEN')
+                projectId = modrinthProjectId
+                minecraftVersions.add(minecraftVersion)
+                environment = DEDICATED_SERVER_ONLY
+                requires('fabric-api')
+            }
+        }
+
+        if (curseforgeProjectId) {
+            curseforge {
+                accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
+                projectId = curseforgeProjectId
+                minecraftVersions.add(minecraftVersion)
+                client = false
+                server = true
+                requires('fabric-api')
+                javaVersions.add(JavaVersion.toVersion(javaVersion))
+            }
+        }
+    }
+}

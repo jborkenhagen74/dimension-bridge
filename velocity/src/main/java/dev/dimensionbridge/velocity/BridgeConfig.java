@@ -31,27 +31,27 @@ final class BridgeConfig {
             authorization-window-ms=5000
             bypass-permission=dimensionbridge.bypass
 
-            destinations=lobby,conquest,world1201b,world262
+            destinations=lobby,hauptwelt,hardcore,vanilla
 
             destination.lobby.display-name=Lobby
             destination.lobby.protected=false
             destination.lobby.allowed-sources=*
             destination.lobby.allowed-protocols=*
 
-            destination.conquest.display-name=Conquest Reforged
-            destination.conquest.protected=true
-            destination.conquest.allowed-sources=lobby
-            destination.conquest.allowed-protocols=MINECRAFT_1_20
+            destination.hauptwelt.display-name=Hauptwelt
+            destination.hauptwelt.protected=true
+            destination.hauptwelt.allowed-sources=lobby
+            destination.hauptwelt.allowed-protocols=MINECRAFT_1_20
 
-            destination.world1201b.display-name=Zweite 1.20.1-Welt
-            destination.world1201b.protected=true
-            destination.world1201b.allowed-sources=lobby
-            destination.world1201b.allowed-protocols=MINECRAFT_1_20
+            destination.hardcore.display-name=Hardcore
+            destination.hardcore.protected=true
+            destination.hardcore.allowed-sources=lobby
+            destination.hardcore.allowed-protocols=MINECRAFT_1_20
 
-            destination.world262.display-name=26.2-Welt
-            destination.world262.protected=true
-            destination.world262.allowed-sources=lobby
-            destination.world262.allowed-protocols=MINECRAFT_26_2
+            destination.vanilla.display-name=Vanilla
+            destination.vanilla.protected=true
+            destination.vanilla.allowed-sources=lobby
+            destination.vanilla.allowed-protocols=MINECRAFT_26_2
             """;
 
     private final Set<String> initialServers;
@@ -94,7 +94,7 @@ final class BridgeConfig {
         long authorizationWindowMillis = parseLong(properties, "authorization-window-ms", 5000L, 500L, 60_000L);
         String bypassPermission = properties.getProperty("bypass-permission", "dimensionbridge.bypass").trim();
 
-        Set<String> destinationNames = parseCsv(properties.getProperty("destinations", "lobby,conquest"), true);
+        Set<String> destinationNames = parseCsv(properties.getProperty("destinations", "lobby,hauptwelt,hardcore,vanilla"), true);
         Map<String, DestinationRule> destinations = new LinkedHashMap<>();
 
         for (String name : destinationNames) {

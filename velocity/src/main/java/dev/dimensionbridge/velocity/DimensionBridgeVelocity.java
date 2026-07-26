@@ -37,9 +37,9 @@ import java.util.regex.Pattern;
 @Plugin(
         id = "dimensionbridge",
         name = "DimensionBridge",
-        version = "1.1.0",
+        version = "1.2.0",
         description = "Sichere, serverseitige Dimensionstransfers zwischen Fabric-Backends und Velocity.",
-        authors = {"OpenAI"}
+        authors = {"Jan Borkenhagen"}
 )
 public final class DimensionBridgeVelocity {
     private static final MinecraftChannelIdentifier TRANSFER_CHANNEL =
@@ -198,7 +198,7 @@ public final class DimensionBridgeVelocity {
         }
 
         if (!rule.allowsSource(sourceServer)) {
-            player.sendMessage(PREFIX.append(Component.text("Diese Dimensionsportal darf dieses Ziel nicht anwählen.", NamedTextColor.RED)));
+            player.sendMessage(PREFIX.append(Component.text("Dieses Dimensionsportal darf dieses Ziel nicht anwählen.", NamedTextColor.RED)));
             logger.warn("Nicht erlaubte Route {} -> {} für {}.", sourceServer, destination, player.getUsername());
             return;
         }
