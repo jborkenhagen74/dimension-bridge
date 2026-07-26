@@ -5,7 +5,7 @@
   "name": "DimensionBridge Backend",
   "description": "Rein serverseitige Bridge von Fabric-Kommandoblöcken zu Velocity.",
   "authors": ["Jan Borkenhagen"],
-  "license": "MIT",
+  "license": "GPLv3",
   "environment": "server",
   "entrypoints": {
     "main": [
