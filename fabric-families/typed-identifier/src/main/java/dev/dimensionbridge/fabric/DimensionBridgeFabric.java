@@ -15,6 +15,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ public final class DimensionBridgeFabric implements ModInitializer {
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 dispatcher.register(Commands.literal("dimensionbridge")
-                        .requires(source -> source.hasPermission(2))
+                        .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_MODERATOR))
                         .then(Commands.literal("transfer")
                                 .then(Commands.argument("targets", EntityArgument.players())
                                         .then(Commands.argument("destination", StringArgumentType.word())

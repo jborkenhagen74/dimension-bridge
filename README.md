@@ -1,4 +1,4 @@
-# DimensionBridge 1.2.1
+# DimensionBridge 1.2.2
 
 DimensionBridge ist eine rein serverseitige, abgesicherte Bridge zwischen Fabric-Backends und einem Velocity-Proxy. Commandblöcke können Spieler zu registrierten Velocity-Servern verbinden, ohne dass normale Spieler `/server` oder eine Bridge-Berechtigung erhalten.
 
@@ -146,17 +146,17 @@ Das Schema lautet `fabric_api_<Version mit Unterstrichen>`.
 Beispiele:
 
 ```text
-velocity/build/libs/dimensionbridge-velocity-1.2.1.jar
-fabric-versions/1.20.1/build/libs/dimensionbridge-fabric-1.20.1-1.2.1+mc1.20.1.jar
-fabric-versions/1.21.11/build/libs/dimensionbridge-fabric-1.21.11-1.2.1+mc1.21.11.jar
-fabric-versions/26.2/build/libs/dimensionbridge-fabric-26.2-1.2.1+mc26.2.jar
+velocity/build/libs/dimensionbridge-velocity-1.2.2.jar
+fabric-versions/1.20.1/build/libs/dimensionbridge-fabric-1.20.1-1.2.2+mc1.20.1.jar
+fabric-versions/1.21.11/build/libs/dimensionbridge-fabric-1.21.11-1.2.2+mc1.21.11.jar
+fabric-versions/26.2/build/libs/dimensionbridge-fabric-26.2-1.2.2+mc26.2.jar
 ```
 
 Bei remappenden Loom-Versionen ist das normale Release-Artefakt die von `remapJar` erzeugte Datei. Entwicklungs- und Sources-JARs werden beim Einsammeln ausgeschlossen.
 
 ## Installation
 
-1. `dimensionbridge-velocity-1.2.1.jar` in `plugins/` des Velocity-Proxys kopieren.
+1. `dimensionbridge-velocity-1.2.2.jar` in `plugins/` des Velocity-Proxys kopieren.
 2. Auf jedem Fabric-Backend genau das JAR verwenden, dessen Minecraft-Version der nativen Serverversion entspricht.
 3. Server einmal starten und stoppen.
 4. Konfigurationen bearbeiten:
@@ -228,7 +228,7 @@ Die Namen müssen exakt den Einträgen in `velocity.toml` entsprechen.
 
 ## Aktualisierung von 1.1.0
 
-Die Laufzeitkonfiguration und der Messaging-Kanal bleiben unverändert. Für ein bestehendes Setup genügt es daher, die Fabric-JAR auf jedem Backend durch die zur nativen Minecraft-Version passende 1.2.1-JAR und das Velocity-JAR durch Version 1.2.1 zu ersetzen. Alte und neue Fabric-JARs dürfen nicht gleichzeitig im selben `mods`-Ordner liegen.
+Die Laufzeitkonfiguration und der Messaging-Kanal bleiben unverändert. Für ein bestehendes Setup genügt es daher, die Fabric-JAR auf jedem Backend durch die zur nativen Minecraft-Version passende 1.2.2-JAR und das Velocity-JAR durch Version 1.2.2 zu ersetzen. Alte und neue Fabric-JARs dürfen nicht gleichzeitig im selben `mods`-Ordner liegen.
 
 Vor einer öffentlichen Veröffentlichung sollten mindestens diese Smoke-Tests für jede API-Familie ausgeführt werden:
 

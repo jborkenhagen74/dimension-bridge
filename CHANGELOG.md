@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2
+
+- Behebt den Build für Minecraft 1.21.11 nach der Umstellung der Befehlsberechtigungen auf `PermissionSet`.
+- Verwendet im Adapter `typed-identifier` nun `source.permissions().hasPermission(Permissions.COMMANDS_MODERATOR)`.
+
 ## 1.2.1
 
 - Behebt den GitHub-Actions-Build für Minecraft 1.20.5 und 1.20.6.

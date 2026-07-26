@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 @Plugin(
         id = "dimensionbridge",
         name = "DimensionBridge",
-        version = "1.2.1",
+        version = "1.2.2",
         description = "Sichere, serverseitige Dimensionstransfers zwischen Fabric-Backends und Velocity.",
         authors = {"Jan Borkenhagen"}
 )
