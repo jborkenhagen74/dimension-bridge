@@ -795,11 +795,3 @@ allowed-destinations=lobby
 
 ---
 
-## 18. Hinweise für Modrinth und CurseForge
-
-- Fabric-JARs werden als **serverseitiger Fabric-Mod** veröffentlicht.
-- Client-Unterstützung: nicht erforderlich beziehungsweise nicht unterstützt.
-- Server-Unterstützung: erforderlich.
-- Fabric API als erforderliche Abhängigkeit angeben.
-- Für jede Minecraft-Version das dazu passende JAR bereitstellen.
-- Das Velocity-JAR sollte als separates Proxy-Plugin-Projekt veröffentlicht werden und nicht mit den Fabric-Dateien im selben Projekt vermischt werden.

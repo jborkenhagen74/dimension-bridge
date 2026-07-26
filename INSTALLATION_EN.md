@@ -794,12 +794,3 @@ allowed-destinations=lobby
 8. Test `/dimensionbridge info` and one basic command-block transfer.
 
 ---
-
-## 18. Modrinth and CurseForge Notes
-
-- Publish Fabric JARs as a **server-side Fabric mod**.
-- Client support: unsupported/not required.
-- Server support: required.
-- Mark Fabric API as a required dependency.
-- Attach the matching JAR to each supported Minecraft version.
-- Publish the Velocity JAR as a separate proxy-plugin project rather than mixing it with the Fabric files in the same project.
