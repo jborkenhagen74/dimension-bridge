@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+base {
+    archivesName = 'dimensionbridge-velocity'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly 'com.velocitypowered:velocity-api:4.1.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:4.1.0-SNAPSHOT'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}

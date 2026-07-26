@@ -1,0 +1,14 @@
+plugins {
+    id 'base'
+}
+
+allprojects {
+    group = 'dev.dimensionbridge'
+    version = '1.1.0'
+}
+
+tasks.register('buildAll') {
+    group = 'build'
+    description = 'Builds the DimensionBridge Velocity plugin and both Fabric server mods.'
+    dependsOn ':velocity:build', ':fabric-1.20.1:build', ':fabric-26.2:build'
+}

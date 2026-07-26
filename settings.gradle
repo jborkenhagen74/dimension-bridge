@@ -1,0 +1,9 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'dimension-bridge'
+include 'velocity', 'fabric-1.20.1', 'fabric-26.2'
