@@ -1,6 +1,10 @@
 .gradle/
 build/
 **/build/
-run/
 .idea/
 *.iml
+.DS_Store
+
+# Never commit publishing credentials
+publishing.properties
+local.properties

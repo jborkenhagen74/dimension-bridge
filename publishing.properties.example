@@ -1,0 +1,11 @@
+# Copy to ~/.gradle/gradle.properties or pass with -P...
+# Never commit API tokens.
+modrinthFabricProjectId=YOUR_MODRINTH_PROJECT_ID
+curseforgeFabricProjectId=YOUR_CURSEFORGE_PROJECT_ID
+
+# Publishing is deliberately disabled by default.
+enablePublishing=true
+
+# Tokens are read from environment variables:
+# MODRINTH_TOKEN=...
+# CURSEFORGE_TOKEN=...

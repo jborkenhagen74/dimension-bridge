@@ -1,146 +1,196 @@
-# DimensionBridge
+# DimensionBridge 1.2.2
 
-Rein serverseitige, abgesicherte Dimensions-Bridge für ein Minecraft-Netzwerk hinter Velocity.
+DimensionBridge ist eine rein serverseitige, abgesicherte Bridge zwischen Fabric-Backends und einem Velocity-Proxy. Commandblöcke können Spieler zu registrierten Velocity-Servern verbinden, ohne dass normale Spieler `/server` oder eine Bridge-Berechtigung erhalten.
 
-Das Projekt enthält drei Artefakte:
+## Artefakte
 
-- `dimensionbridge-velocity`: Plugin für den aktuellen Velocity-4.1-API-Zweig
-- `dimensionbridge-fabric-1.20.1`: serverseitiger Fabric-Mod für Minecraft 1.20.1
-- `dimensionbridge-fabric-26.2`: serverseitiger Fabric-Mod für Minecraft 26.2
+Das Projekt baut:
 
-Es ist **kein Client-Mod** erforderlich. Die Fabric-Backends senden eine Custom-Payload an Velocity; Velocity fängt sie ab, prüft Route und Clientprotokoll und verbindet den Spieler direkt über seine API. Der Spielerbefehl `/server` wird dabei nicht benutzt.
+- ein Velocity-Plugin für den aktuellen Velocity-4.1-API-Zweig;
+- ein separates Fabric-Backend-JAR für jede stabile Minecraft-Version von 1.20.1 bis 26.2.
 
-## Sicherheitsmodell
+Es ist kein Client-Mod erforderlich.
 
-1. `/dimensionbridge transfer` ist backendseitig nur für Befehlsblöcke, Konsole und Moderatoren/OPs registriert.
-2. Der Fabric-Mod akzeptiert nur lokal freigegebene Zielnamen.
-3. Velocity akzeptiert Nachrichten nur von einer echten `ServerConnection`.
-4. Velocity prüft, ob der Spieler noch auf genau diesem sendenden Backend ist.
-5. Ziel, erlaubter Quellserver und Clientprotokoll werden erneut auf Velocity geprüft.
-6. Geschützte Ziele werden in `ServerPreConnectEvent` blockiert, sofern unmittelbar zuvor keine gültige Bridge-Anforderung vorlag. Damit scheitern auch manuelles `/server`, andere Direktbefehle oder einfache Menü-Plugins.
-7. Ein kurzer Cooldown verhindert Spam und Doppeltransfers.
+## Unterstützte Fabric-Versionen
+
+Der Build enthält 22 stabile Ziele:
+
+```text
+1.20.1  1.20.2  1.20.3  1.20.4  1.20.5  1.20.6
+1.21    1.21.1  1.21.2  1.21.3  1.21.4  1.21.5
+1.21.6  1.21.7  1.21.8  1.21.9  1.21.10 1.21.11
+26.1    26.1.1  26.1.2  26.2
+```
+
+Snapshots, Pre-Releases und Release Candidates sind bewusst ausgeschlossen. Details stehen in [SUPPORTED_VERSIONS.md](SUPPORTED_VERSIONS.md).
+
+## Wartbare Multi-Version-Architektur
+
+Die 22 JARs verwenden nicht 22 getrennte Codekopien, sondern fünf API-Familien:
+
+| Familie | Minecraft | Java | Netzwerk-API |
+|---|---|---:|---|
+| `legacy` | 1.20.1–1.20.4 | 17 | `Identifier/ResourceLocation` + `PacketByteBuf/FriendlyByteBuf` |
+| `typed-constructor` | 1.20.5–1.20.6 | 21 | typisierte Payloads; `ResourceLocation` wird noch über den öffentlichen Konstruktor erstellt |
+| `typed` | 1.21–1.21.10 | 21 | typisierte `CustomPacketPayload`-Pakete mit `ResourceLocation.fromNamespaceAndPath(...)` |
+| `typed-identifier` | 1.21.11 | 21 | typisierte Payloads nach der Umbenennung zu `Identifier` |
+| `unobfuscated` | 26.1–26.2 | 25 | nicht remappendes Loom und neue Mojang-Namen |
+
+Die gemeinsame Konfigurations- und Validierungslogik liegt in `fabric-common`. Versionsabhängiger Minecraft-/Fabric-Code liegt in `fabric-families`.
 
 ## Voraussetzungen
 
-### Proxy
+### Gesamter Build
 
-- aktueller Velocity-Build mit API 4.1
-- Java 25 für den aktuellen Velocity-4.1-Snapshot
-- optional LuckPerms, um `/server` für Spieler zu entziehen
+- JDK 25
+- Gradle 9.5.1
+- Internetzugriff auf Fabric Maven, Mojang und PaperMC
 
-### Minecraft 1.20.1 Backend
+Der Build läuft vollständig mit einer JDK-25-Toolchain. `javac --release` erzeugt für die älteren Zielversionen dennoch Java-17- beziehungsweise Java-21-kompatible Klassen; zusätzliche lokal installierte JDKs sind nicht erforderlich.
 
-- Fabric Loader 0.19.3
-- Fabric API 0.92.11+1.20.1
-- Java 17
+### Laufzeit
 
-### Minecraft 26.2 Backend
-
-- Fabric Loader 0.19.3
-- Fabric API 0.155.2+26.2
-- Java 25
-
-Vorhandene Mods wie FabricProxy-Lite, CrossStitch und ViaVersion können parallel weiterlaufen. Proxy Command wird für DimensionBridge nicht benötigt.
+- Minecraft 1.20.1–1.20.4: Java 17
+- Minecraft 1.20.5–1.21.11: Java 21
+- Minecraft 26.1–26.2: Java 25
+- Fabric Loader und Fabric API passend zur jeweiligen Spielversion
+- aktueller Velocity-Proxy für das Velocity-Artefakt
 
 ## Bauen
 
-Für den vollständigen Build wird ein JDK 25 sowie Gradle 9.5.1 empfohlen. Gradle verwendet für die einzelnen Module passende Release-Ziele.
-
-Das Projekt verwendet Fabric Loom `1.17.16` für beide Loom-Plugin-IDs. Beim nicht verschleierten Minecraft 26.2 werden Fabric Loader und Fabric API über Gradles `implementation`-Konfiguration eingebunden; `modImplementation` existiert in diesem Loom-Modus nicht.
+### Alles bauen und einsammeln
 
 ```bash
-gradle clean buildAll
+gradle clean collectReleaseArtifacts
 ```
 
-oder unter Linux/macOS:
+oder:
 
 ```bash
 ./build.sh
 ```
 
-Ergebnisse:
+Alle normalen Release-JARs landen anschließend zusätzlich in:
 
 ```text
-velocity/build/libs/dimensionbridge-velocity-1.1.0.jar
-fabric-1.20.1/build/libs/dimensionbridge-fabric-1.20.1-1.1.0.jar
-fabric-26.2/build/libs/dimensionbridge-fabric-26.2-1.1.0.jar
+build/releases/
 ```
 
-## Fehlerbehebung beim Build
-
-### Velocity-4.1-Snapshot verlangt Java 25
-
-Aktuelle Veröffentlichungen von `com.velocitypowered:velocity-api:4.1.0-SNAPSHOT` sind für Java 25 gebaut. Das Velocity-Modul verwendet deshalb eine Java-25-Toolchain und `options.release = 25`. Der Proxy muss dieses Plugin ebenfalls mit Java 25 laden.
-
-Falls Gradle meldet, die Velocity-API sei nur mit JVM 25 oder neuer kompatibel, prüfe `velocity/build.gradle`:
-
-```gradle
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
-    withSourcesJar()
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 25
-    options.encoding = 'UTF-8'
-}
-```
-
-Falls ein älterer Projektstand diesen Fehler meldet:
-
-```text
-Could not find method modImplementation() ... in project ':fabric-26.2'
-```
-
-prüfe `fabric-26.2/build.gradle`. Für Minecraft 26.2 muss der Abhängigkeitsblock so aussehen:
-
-```gradle
-dependencies {
-    minecraft 'com.mojang:minecraft:26.2'
-    implementation 'net.fabricmc:fabric-loader:0.19.3'
-    implementation 'net.fabricmc.fabric-api:fabric-api:0.155.2+26.2'
-}
-```
-
-Danach den Gradle-Cache für dieses Projekt neu auswerten:
+### Nur ein einzelnes Fabric-Ziel bauen
 
 ```bash
-gradle --stop
-gradle clean buildAll --refresh-dependencies
+gradle :fabric-1.21.4:build
 ```
 
-## Migration von Version 1.0.x
+### Mehrere ausgewählte Ziele bauen
 
-Die Umbenennung auf DimensionBridge ändert technische IDs und Dateinamen. Vor der Installation:
+```bash
+gradle buildSelected -PmcVersions=1.20.1,1.21.1,26.2
+```
 
-1. Alte Bridge-JARs aus `plugins/` und `mods/` entfernen.
-2. Die bisherige Velocity-Konfiguration in die neue Datei `plugins/dimensionbridge/dimensionbridge.properties` übernehmen.
-3. Die bisherige Fabric-Positivliste in `config/dimensionbridge-fabric.properties` übernehmen.
-4. Alle bisherigen Commandblöcke auf `dimensionbridge transfer ...` umstellen.
-5. LuckPerms-Knoten auf `dimensionbridge.admin` und `dimensionbridge.bypass` umstellen.
-6. Proxy und Backends vollständig neu starten.
+### Alle Fabric-Ziele ohne Velocity bauen
 
-Alte und neue Bridge-Versionen dürfen nicht gleichzeitig installiert sein, da sie unterschiedliche Plugin-Messaging-Kanäle verwenden.
+```bash
+gradle buildFabricAll
+```
+
+### Versionsmatrix anzeigen
+
+```bash
+gradle printSupportedVersions
+```
+
+### Matrix prüfen und je API-Familie einen Vertreter bauen
+
+```bash
+gradle verifyVersionMatrix
+gradle buildFamilyRepresentatives
+```
+
+`buildFamilyRepresentatives` baut Velocity sowie 1.20.1, 1.20.5, 1.21, 1.21.11 und 26.2. Das ist der schnelle Kompatibilitätstest vor einem vollständigen 22-Versionen-Build.
+
+## Spätere Minecraft-Versionen ergänzen
+
+Neue Ziele lassen sich ohne Kopieren des gesamten Mods ergänzen. Wenn die neue Version zu einer vorhandenen API-Familie passt:
+
+```bash
+python3 tools/add-fabric-target.py 26.3 unobfuscated 25 plain
+gradle verifyVersionMatrix
+gradle :fabric-26.3:build
+```
+
+Weicht die Minecraft-/Fabric-API ab, wird zuerst eine neue kleine Adapterfamilie unter `fabric-families/` angelegt. Gemeinsame Konfiguration und Sicherheitslogik bleiben unverändert.
+
+## Fabric-API-Versionen
+
+Für 1.20.1, 1.21.11, 26.1.2 und 26.2 sind bekannte API-Versionen in `gradle.properties` festgesetzt. Für alle anderen Ziele wählt Gradle automatisch die neueste Maven-Version von Fabric API, deren Versionsname auf `+<Minecraft-Version>` endet.
+
+Nach einem erfolgreichen Gesamtbuild sollte die Auswahl fixiert werden:
+
+```bash
+gradle buildFabricAll --write-locks
+```
+
+Die erzeugten Lockfiles sollten ins Repository übernommen werden. Dadurch bleiben spätere Builds reproduzierbar, obwohl die Fallback-Auflösung dynamisch ist.
+
+Eine Version kann jederzeit explizit überschrieben werden:
+
+```properties
+fabric_api_1_21_4=0.119.4+1.21.4
+```
+
+Das Schema lautet `fabric_api_<Version mit Unterstrichen>`.
+
+## Erwartete Dateinamen
+
+Beispiele:
+
+```text
+velocity/build/libs/dimensionbridge-velocity-1.2.2.jar
+fabric-versions/1.20.1/build/libs/dimensionbridge-fabric-1.20.1-1.2.2+mc1.20.1.jar
+fabric-versions/1.21.11/build/libs/dimensionbridge-fabric-1.21.11-1.2.2+mc1.21.11.jar
+fabric-versions/26.2/build/libs/dimensionbridge-fabric-26.2-1.2.2+mc26.2.jar
+```
+
+Bei remappenden Loom-Versionen ist das normale Release-Artefakt die von `remapJar` erzeugte Datei. Entwicklungs- und Sources-JARs werden beim Einsammeln ausgeschlossen.
 
 ## Installation
 
-1. `dimensionbridge-velocity-1.1.0.jar` nach `plugins/` des Velocity-Proxys kopieren.
-2. Den passenden Fabric-JAR nach `mods/` jedes Backends kopieren, das ein Dimensionsportal auslösen soll:
-   - Lobby: passend zur nativen Lobbyversion
-   - 1.20.1-Spielwelten: 1.20.1-JAR
-   - 26.2-Spielwelt: 26.2-JAR
-3. Proxy und Backends einmal starten und wieder stoppen.
-4. Die erzeugten Konfigurationen bearbeiten:
+1. `dimensionbridge-velocity-1.2.2.jar` in `plugins/` des Velocity-Proxys kopieren.
+2. Auf jedem Fabric-Backend genau das JAR verwenden, dessen Minecraft-Version der nativen Serverversion entspricht.
+3. Server einmal starten und stoppen.
+4. Konfigurationen bearbeiten:
    - Velocity: `plugins/dimensionbridge/dimensionbridge.properties`
    - Fabric: `config/dimensionbridge-fabric.properties`
-5. Alle Servernamen exakt an die Namen aus `[servers]` in `velocity.toml` anpassen.
-6. Erst die Backends und danach Velocity neu starten.
+5. Backends und Proxy vollständig neu starten.
 
-Beispieldateien liegen unter `examples/`.
+Alle Fabric-JARs verwenden denselben Kanal:
 
-## Velocity-Konfiguration
+```text
+dimensionbridge:transfer
+```
+
+Daher ist nur ein Velocity-Plugin für alle Backend-Versionen nötig.
+
+## Commandblock
+
+Beispiel:
+
+```mcfunction
+dimensionbridge transfer @p[distance=..3,limit=1,sort=nearest] hauptwelt
+```
+
+Der Befehl ist backendseitig nur für Commandblöcke, Konsole und entsprechend privilegierte Quellen verfügbar.
+
+## Konfiguration
+
+### Fabric
+
+```properties
+allowed-destinations=lobby,hauptwelt,hardcore,vanilla
+```
+
+### Velocity
 
 ```properties
 initial-servers=lobby
@@ -149,123 +199,133 @@ cooldown-ms=2500
 authorization-window-ms=5000
 bypass-permission=dimensionbridge.bypass
 
-destinations=lobby,conquest,welt2,welt262
+destinations=lobby,hauptwelt,hardcore,vanilla
 
 destination.lobby.display-name=Lobby
 destination.lobby.protected=false
 destination.lobby.allowed-sources=*
 destination.lobby.allowed-protocols=*
 
-destination.conquest.display-name=Conquest Reforged
-destination.conquest.protected=true
-destination.conquest.allowed-sources=lobby
-destination.conquest.allowed-protocols=MINECRAFT_1_20
-
-destination.welt2.display-name=Zweite 1.20.1-Welt
-destination.welt2.protected=true
-destination.welt2.allowed-sources=lobby
-destination.welt2.allowed-protocols=MINECRAFT_1_20
-
-destination.welt262.display-name=26.2-Welt
-destination.welt262.protected=true
-destination.welt262.allowed-sources=lobby
-destination.welt262.allowed-protocols=MINECRAFT_26_2
+destination.hauptwelt.display-name=Hauptwelt
+destination.hauptwelt.protected=true
+destination.hauptwelt.allowed-sources=lobby
+destination.hauptwelt.allowed-protocols=MINECRAFT_1_20
 ```
 
-### Bedeutung
+Die Namen müssen exakt den Einträgen in `velocity.toml` entsprechen.
 
-- `initial-servers`: Ziele, die beim ersten Login ohne Bridge betreten werden dürfen.
-- `deny-unlisted-targets`: `true` sperrt auch alle nicht in `destinations` aufgeführten Backends.
-- `protected`: Bei `true` ist eine gültige Bridge-Anforderung zwingend nötig.
-- `allowed-sources`: Backend-Namen, von denen dieses Ziel angewählt werden darf.
-- `allowed-protocols`: Velocity-Enum-Namen oder `*`.
-- `bypass-permission`: Erlaubt Administratoren direkte Wechsel zu geschützten Zielen.
+## Sicherheit
 
-Minecraft 1.20 und 1.20.1 verwenden dasselbe Netzwerkprotokoll. Velocity kann sie daher nicht voneinander unterscheiden; beide erscheinen als `MINECRAFT_1_20`.
-
-## Fabric-Konfiguration
-
-```properties
-allowed-destinations=lobby,conquest,welt2,welt262
-```
-
-Diese Positivliste ist eine zusätzliche lokale Sicherung. Auf einer Spielwelt kannst du beispielsweise nur `lobby` erlauben.
-
-## Rechte
-
-Normale Spieler benötigen **keine** DimensionBridge- oder Velocity-Berechtigung.
-
-Mit LuckPerms auf dem Proxy sollte `/server` entzogen werden:
+1. Das Fabric-Backend akzeptiert nur lokal freigegebene Zielnamen.
+2. Velocity akzeptiert die Payload nur von einer echten Backend-Verbindung.
+3. Quelle, Ziel, Spieler, Protokollversion, Cooldown und Autorisierungsfenster werden geprüft.
+4. Geschützte Ziele werden in `ServerPreConnectEvent` gesperrt, wenn keine gültige Bridge-Anforderung vorliegt.
+5. `/server` kann normalen Spielern daher entzogen werden:
 
 ```text
 /lp group default permission set velocity.command.server false
 ```
 
-Administratoren können optional erhalten:
+## Aktualisierung von 1.1.0
+
+Die Laufzeitkonfiguration und der Messaging-Kanal bleiben unverändert. Für ein bestehendes Setup genügt es daher, die Fabric-JAR auf jedem Backend durch die zur nativen Minecraft-Version passende 1.2.2-JAR und das Velocity-JAR durch Version 1.2.2 zu ersetzen. Alte und neue Fabric-JARs dürfen nicht gleichzeitig im selben `mods`-Ordner liegen.
+
+Vor einer öffentlichen Veröffentlichung sollten mindestens diese Smoke-Tests für jede API-Familie ausgeführt werden:
 
 ```text
-/lp group admin permission set dimensionbridge.admin true
-/lp group admin permission set dimensionbridge.bypass true
+1.20.1   legacy
+1.20.5   typed-constructor
+1.21     typed
+1.21.11  typed-identifier
+26.2     unobfuscated
 ```
 
-`dimensionbridge.bypass` umgeht die geschützten Routen vollständig und sollte nur vertrauenswürdigen Administratoren gegeben werden.
+Damit werden alle unterschiedlichen Netzwerk- und Mapping-Pfade geprüft.
 
-## Befehle
+## Veröffentlichung auf Modrinth und CurseForge
 
-### Fabric-Backend
+Die Veröffentlichung ist standardmäßig deaktiviert. Das Projekt verwendet das Mod Publish Plugin und erzeugt pro Minecraft-Version einen eigenen Plattform-Release.
+
+### Projekt-IDs setzen
+
+`publishing.properties.example` zeigt die benötigten Werte. Am besten in `~/.gradle/gradle.properties`:
+
+```properties
+enablePublishing=true
+modrinthFabricProjectId=DEINE_MODRINTH_ID
+curseforgeFabricProjectId=DEINE_CURSEFORGE_ID
+```
+
+Tokens niemals committen, sondern als Umgebungsvariablen setzen:
+
+```bash
+export MODRINTH_TOKEN='...'
+export CURSEFORGE_TOKEN='...'
+```
+
+### Einzelne Version veröffentlichen
+
+```bash
+gradle :fabric-1.21.4:publishMods -PenablePublishing=true
+```
+
+### Alle Fabric-Versionen veröffentlichen
+
+```bash
+gradle publishFabricAll -PenablePublishing=true
+```
+
+Jeder Upload wird als:
+
+- Loader: Fabric
+- Umgebung: ausschließlich Dedicated Server
+- Abhängigkeit: Fabric API
+- unterstützte Minecraft-Version: exakt die jeweilige Zielversion
+
+veröffentlicht.
+
+### GitHub Actions
+
+Enthalten sind:
+
+- `.github/workflows/build.yml`
+- `.github/workflows/publish.yml`
+
+Für den Publish-Workflow werden benötigt:
+
+**Repository Secrets**
 
 ```text
-/dimensionbridge transfer <Zielselektor> <Velocity-Servername>
+MODRINTH_TOKEN
+CURSEFORGE_TOKEN
 ```
 
-Funktionstest in einem Impuls-Commandblock:
-
-```mcfunction
-dimensionbridge transfer @p[distance=..3,limit=1,sort=nearest] conquest
-```
-
-Rückkehr zur Lobby:
-
-```mcfunction
-dimensionbridge transfer @p[distance=..3,limit=1,sort=nearest] lobby
-```
-
-### Velocity
+**Repository Variables**
 
 ```text
-/dimensionbridge reload
-/dimensionbridge protocol [Spieler]
-/dimensionbridge info
+MODRINTH_FABRIC_PROJECT_ID
+CURSEFORGE_FABRIC_PROJECT_ID
 ```
 
-Diese Befehle benötigen `dimensionbridge.admin` oder die Proxy-Konsole.
+## Velocity separat veröffentlichen
 
-## Flimmer-Effekt und Countdown
+Das Velocity-JAR ist technisch ein Proxy-Plugin und nicht dasselbe Artefakt wie der Fabric-Mod. Für Modrinth sollte dafür ein eigenes Plugin-Projekt angelegt werden. CurseForge unterstützt Velocity-Projekte nicht in allen Kategorien gleichwertig; deshalb ist der automatische Upload des Velocity-JARs bewusst nicht mit dem Fabric-Projekt vermischt.
 
-Eine vollständige Beispielkette liegt in:
+## Projektstruktur
 
 ```text
-examples/command-blocks.mcfunction
+gradle/fabric-targets.json       stabile Zielversionen
+gradle/fabric-version.gradle    gemeinsamer Build aller Fabric-Ziele
+fabric-common/                  gemeinsame Konfiguration/Validierung
+fabric-families/legacy/         1.20.1–1.20.4
+fabric-families/typed-constructor/ 1.20.5–1.20.6
+fabric-families/typed/          1.21–1.21.10
+fabric-families/typed-identifier/ 1.21.11
+fabric-families/unobfuscated/   26.1–26.2
+fabric-versions/<version>/      dünne Gradle-Subprojekte
+velocity/                       Velocity-Plugin
 ```
 
-Der Transferbefehl am Ende eines Countdowns lautet beispielsweise:
+## Lizenz
 
-```mcfunction
-dimensionbridge transfer @a[scores={dimensionTimer=1,dimensionTarget=1}] conquest
-```
-
-Die Partikel-, Sound- und Timerblöcke bleiben vollständig Vanilla. Das klickbare Chatmenü kann `/trigger dimension set 1`, `/trigger dimension set 2` und `/trigger dimension set 3` setzen; niemals `/server` oder `/dimensionbridge` direkt.
-
-## Empfohlene Testreihenfolge
-
-1. Als OP in der Lobby den Commandblock-Test nach `conquest` ausführen.
-2. `/dimensionbridge protocol <Spieler>` auf Velocity prüfen.
-3. Als normaler Spieler `/server conquest` testen: muss mangels Berechtigung oder durch den Routenschutz scheitern.
-4. Den Dimensionsportal-Commandblock testen: muss funktionieren.
-5. Mit einer falschen Clientversion testen: Velocity muss den Wechsel ablehnen.
-6. Rückkehrzelle von jeder Spielwelt zur Lobby testen.
-7. Server offline nehmen und Fehlermeldung/Fallback-Verhalten mit vConnect prüfen.
-
-## Hinweise zu vConnect und Fallbacks
-
-Die Lobby ist im Beispiel nicht als geschütztes Ziel markiert. Dadurch können vConnect und Velocity-Fallbacks weiterhin zur Lobby umleiten. Da normalen Spielern `velocity.command.server` entzogen wird, können sie die Lobby trotzdem nicht per `/server` anwählen. Soll selbst die Lobby ausschließlich über eine Bridge erreichbar sein, setze `destination.lobby.protected=true` und trage die erlaubten Spielserver als Quellen ein; prüfe dann aber Fallbacks besonders sorgfältig.
+MIT

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "dimensionbridge",
+  "version": "${version}",
+  "name": "DimensionBridge Backend",
+  "description": "Rein serverseitige Bridge von Fabric-Kommandoblöcken zu Velocity.",
+  "authors": ["Jan Borkenhagen"],
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.dimensionbridge.fabric.DimensionBridgeFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": "*"
+  }
+}

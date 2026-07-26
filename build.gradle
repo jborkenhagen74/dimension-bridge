@@ -1,14 +1,129 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id 'base'
+    id 'net.fabricmc.fabric-loom-remap' version '1.17.16' apply false
+    id 'net.fabricmc.fabric-loom' version '1.17.16' apply false
+    id 'me.modmuss50.mod-publish-plugin' version '2.1.1' apply false
 }
 
 allprojects {
     group = 'dev.dimensionbridge'
-    version = '1.1.0'
 }
 
+version = '1.2.2'
+
+def fabricTargets = new JsonSlurper().parse(file('gradle/fabric-targets.json'))
+ext.fabricTargets = fabricTargets
+
+project(':velocity') {
+    version = rootProject.version
+}
+
+
+tasks.register('verifyVersionMatrix') {
+    group = 'verification'
+    description = 'Validates target uniqueness, project directories and API-family source trees.'
+    doLast {
+        def versions = fabricTargets.collect { it.minecraft }
+        def duplicates = versions.groupBy { it }.findAll { key, values -> values.size() > 1 }.keySet()
+        if (!duplicates.isEmpty()) {
+            throw new GradleException("Doppelte Minecraft-Ziele: ${duplicates.join(', ')}")
+        }
+
+        fabricTargets.each { target ->
+            File projectDirectory = file("fabric-versions/${target.minecraft}")
+            File familyDirectory = file("fabric-families/${target.family}/src/main/java")
+            if (!new File(projectDirectory, 'build.gradle').isFile()) {
+                throw new GradleException("Builddatei fehlt für Minecraft ${target.minecraft}: ${projectDirectory}")
+            }
+            if (!familyDirectory.isDirectory()) {
+                throw new GradleException("API-Familie fehlt für Minecraft ${target.minecraft}: ${familyDirectory}")
+            }
+            if (!(target.java in [17, 21, 25])) {
+                throw new GradleException("Nicht unterstützte Java-Zielversion für ${target.minecraft}: ${target.java}")
+            }
+            if (!(target.loom in ['remap', 'plain'])) {
+                throw new GradleException("Unbekannter Loom-Modus für ${target.minecraft}: ${target.loom}")
+            }
+        }
+        println "Versionsmatrix geprüft: ${fabricTargets.size()} Ziele, ${fabricTargets*.family.unique().size()} API-Familien."
+    }
+}
+
+tasks.register('buildFamilyRepresentatives') {
+    group = 'verification'
+    description = 'Builds one representative of every Fabric API family plus Velocity.'
+    dependsOn 'verifyVersionMatrix', ':velocity:build', ':fabric-1.20.1:build', ':fabric-1.20.5:build', ':fabric-1.21:build', ':fabric-1.21.11:build', ':fabric-26.2:build'
+}
+
+tasks.named('check') {
+    dependsOn 'verifyVersionMatrix'
+}
+
+tasks.register('buildFabricAll') {
+    group = 'build'
+    description = 'Builds a dedicated Fabric server JAR for every supported stable Minecraft version.'
+    dependsOn fabricTargets.collect { ":fabric-${it.minecraft}:build" }
+}
+
+
+
+tasks.register('buildSelected') {
+    group = 'build'
+    description = 'Builds only the comma-separated versions from -PmcVersions=1.20.1,1.21.11.'
+    doFirst {
+        if (!providers.gradleProperty('mcVersions').isPresent()) {
+            throw new GradleException('Bitte -PmcVersions=1.20.1,1.21.11 angeben.')
+        }
+    }
+    def requested = providers.gradleProperty('mcVersions').orElse('').map { value ->
+        value.split(',').collect { it.trim() }.findAll { !it.isEmpty() }
+    }
+    dependsOn requested.map { versions ->
+        versions.collect { mc ->
+            if (!fabricTargets.any { it.minecraft == mc }) {
+                throw new GradleException("Nicht unterstützte Minecraft-Version: ${mc}")
+            }
+            ":fabric-${mc}:build"
+        }
+    }
+}
 tasks.register('buildAll') {
     group = 'build'
-    description = 'Builds the DimensionBridge Velocity plugin and both Fabric server mods.'
-    dependsOn ':velocity:build', ':fabric-1.20.1:build', ':fabric-26.2:build'
+    description = 'Builds Velocity and every supported Fabric server version.'
+    dependsOn 'verifyVersionMatrix', ':velocity:build', 'buildFabricAll'
+}
+
+tasks.register('collectReleaseArtifacts', Copy) {
+    group = 'distribution'
+    description = 'Collects all release JARs in build/releases.'
+    dependsOn 'buildAll'
+    into layout.buildDirectory.dir('releases')
+    from(project(':velocity').layout.buildDirectory.dir('libs')) {
+        include 'dimensionbridge-velocity-*.jar'
+        exclude '*-sources.jar', '*-dev.jar'
+    }
+    fabricTargets.each { target ->
+        from(project(":fabric-${target.minecraft}").layout.buildDirectory.dir('libs')) {
+            include 'dimensionbridge-fabric-*.jar'
+            exclude '*-sources.jar', '*-dev.jar'
+        }
+    }
+}
+
+tasks.register('printSupportedVersions') {
+    group = 'help'
+    description = 'Prints the Minecraft versions and source/API families used by the build.'
+    doLast {
+        fabricTargets.each { target ->
+            println String.format('%-9s Java %-2s  %s', target.minecraft, target.java, target.family)
+        }
+    }
+}
+
+tasks.register('publishFabricAll') {
+    group = 'publishing'
+    description = 'Publishes every Fabric version. Requires -PenablePublishing=true and platform credentials.'
+    dependsOn fabricTargets.collect { ":fabric-${it.minecraft}:publishMods" }
 }

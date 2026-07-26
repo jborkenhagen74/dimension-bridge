@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 pluginManagement {
     repositories {
         maven { url = 'https://maven.fabricmc.net/' }
@@ -6,4 +8,11 @@ pluginManagement {
 }
 
 rootProject.name = 'dimension-bridge'
-include 'velocity', 'fabric-1.20.1', 'fabric-26.2'
+include 'velocity'
+
+def targets = new JsonSlurper().parse(file('gradle/fabric-targets.json'))
+targets.each { target ->
+    String projectName = "fabric-${target.minecraft}"
+    include projectName
+    project(":${projectName}").projectDir = file("fabric-versions/${target.minecraft}")
+}

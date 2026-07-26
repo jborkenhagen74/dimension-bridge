@@ -1,0 +1,134 @@
+[
+  {
+    "minecraft": "1.20.1",
+    "family": "legacy",
+    "java": 17,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.20.2",
+    "family": "legacy",
+    "java": 17,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.20.3",
+    "family": "legacy",
+    "java": 17,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.20.4",
+    "family": "legacy",
+    "java": 17,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.20.5",
+    "family": "typed-constructor",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.20.6",
+    "family": "typed-constructor",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.1",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.2",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.3",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.4",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.5",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.6",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.7",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.8",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.9",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.10",
+    "family": "typed",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "1.21.11",
+    "family": "typed-identifier",
+    "java": 21,
+    "loom": "remap"
+  },
+  {
+    "minecraft": "26.1",
+    "family": "unobfuscated",
+    "java": 25,
+    "loom": "plain"
+  },
+  {
+    "minecraft": "26.1.1",
+    "family": "unobfuscated",
+    "java": 25,
+    "loom": "plain"
+  },
+  {
+    "minecraft": "26.1.2",
+    "family": "unobfuscated",
+    "java": 25,
+    "loom": "plain"
+  },
+  {
+    "minecraft": "26.2",
+    "family": "unobfuscated",
+    "java": 25,
+    "loom": "plain"
+  }
+]
